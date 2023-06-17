@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import './widgets/new_transaction.dart';
 import './widgets/chart.dart';
@@ -6,6 +7,11 @@ import './widgets/transaction_list.dart';
 import './models/transaction.dart';
 
 void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
   runApp(const MyApp());
 }
 
@@ -23,11 +29,11 @@ class MyApp extends StatelessWidget {
               ColorScheme.fromSwatch().copyWith(secondary: Colors.amber),
           fontFamily: 'Quicksand',
           textTheme: ThemeData.light().textTheme.copyWith(
-              titleLarge: TextStyle(
+              titleLarge: const TextStyle(
                   fontFamily: 'OpenSans',
                   fontWeight: FontWeight.bold,
                   fontSize: 18)),
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
               titleTextStyle: TextStyle(fontFamily: 'OpenSans', fontSize: 20))),
       home: MyHomePage(),
     );
@@ -35,7 +41,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({super.key});
+  const MyHomePage({super.key});
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -50,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //     amount: 16.53,
     //     date: DateTime.now())
   ];
+  bool _showChart = false;
   List<Transaction> get _recentTransactions {
     return _userTransaction.where((tx) {
       return tx.date.isAfter(
@@ -88,32 +95,55 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
-        title: const Text(
-          'Personal Expenses',
-          style: TextStyle(fontFamily: 'Open Sans'),
-        ),
-        actions: <Widget>[
-          IconButton(
-              onPressed: () => _addNewTrnx(context), icon: Icon(Icons.add))
-        ],
+    final appbar = AppBar(
+      backgroundColor: Theme.of(context).primaryColor,
+      title: const Text(
+        'Personal Expenses',
+        style: TextStyle(fontFamily: 'Open Sans'),
       ),
+      actions: <Widget>[
+        IconButton(onPressed: () => _addNewTrnx(context), icon: Icon(Icons.add))
+      ],
+    );
+    return Scaffold(
+      appBar: appbar,
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            SizedBox(
-              width: double.infinity,
-              child: Chart(_recentTransactions),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text('Show Chart'),
+                Switch(
+                    value: _showChart,
+                    onChanged: (val) {
+                      setState(() {
+                        _showChart = val;
+                      });
+                    })
+              ],
             ),
-            TransactionList(_userTransaction, _removeTransaction)
+            _showChart
+                ? SizedBox(
+                    width: double.infinity,
+                    height: (MediaQuery.of(context).size.height -
+                            appbar.preferredSize.height -
+                            MediaQuery.of(context).padding.top) *
+                        0.3,
+                    child: Chart(_recentTransactions),
+                  )
+                : SizedBox(
+                    height: (MediaQuery.of(context).size.height -
+                            appbar.preferredSize.height -
+                            MediaQuery.of(context).padding.top) *
+                        0.7,
+                    child:
+                        TransactionList(_userTransaction, _removeTransaction))
           ],
         ),
       ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.,
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addNewTrnx(context),
         child: Icon(Icons.add),
